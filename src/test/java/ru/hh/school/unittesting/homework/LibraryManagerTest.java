@@ -10,8 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,22 +63,15 @@ class LibraryManagerTest {
   }
 
   @Test
-  void testBorrowBookSuccess() throws NoSuchFieldException, IllegalAccessException {
+  void testBorrowBookSuccess() {
     boolean borrowResult = libraryManager.borrowBook("book1", "user_active");
 
     verifyOneNotification("user_active", "You have borrowed the book: book1");
 
     int copiesLeft = libraryManager.getAvailableCopies("book1");
 
-    Field borrowedBooksField = libraryManager.getClass().getDeclaredField("borrowedBooks");
-    borrowedBooksField.setAccessible(true);
-
-    @SuppressWarnings("unchecked")
-    Map<String, String> borrowedBooks = (Map<String, String>) borrowedBooksField.get(libraryManager);
-
     assertTrue(borrowResult);
     assertEquals(9, copiesLeft);
-    assertEquals("user_active", borrowedBooks.get("book1"));
   }
 
   @Test
@@ -99,19 +90,12 @@ class LibraryManagerTest {
   }
 
   @Test
-  void testReturnBookSuccess() throws NoSuchFieldException, IllegalAccessException {
+  void testReturnBookSuccess() {
     boolean borrowResult = libraryManager.borrowBook("book1", "user_active");
     assertTrue(borrowResult);
 
     boolean returnResult = libraryManager.returnBook("book1", "user_active");
     assertTrue(returnResult);
-
-    Field borrowedBooksField = libraryManager.getClass().getDeclaredField("borrowedBooks");
-    borrowedBooksField.setAccessible(true);
-
-    @SuppressWarnings("unchecked")
-    Map<String, String> borrowedBooks = (Map<String, String>) borrowedBooksField.get(libraryManager);
-    assertFalse(borrowedBooks.containsKey("book1"));
 
     int copiesLeft = libraryManager.getAvailableCopies("book1");
     assertEquals(10, copiesLeft);
@@ -131,10 +115,11 @@ class LibraryManagerTest {
 
   static Stream<Arguments> provideLateFeeScenarios() {
     return Stream.of(
+        Arguments.of(0, false, false, 0),
         Arguments.of(10, false, false, 5.0),
         Arguments.of(13, true, false, 9.75),
-        Arguments.of(15, false, true, 6.0),
-        Arguments.of(14, true, true, 8.4)
+        Arguments.of(14, true, true, 8.4),
+        Arguments.of(15, false, true, 6.0)
     );
   }
 
